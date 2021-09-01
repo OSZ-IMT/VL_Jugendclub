@@ -1,10 +1,11 @@
-package de.oszimt.ls.quiz.view;
-
-import de.oszimt.ls.quiz.controller.Controller;
+package de.oszimt.ls.quiz;
 
 import java.awt.EventQueue;
 
 import javax.swing.JOptionPane;
+
+import de.oszimt.ls.quiz.controller.Controller;
+import de.oszimt.ls.quiz.view.QuizGUI;
 
 public class StartQuiz {
 
@@ -15,7 +16,7 @@ public class StartQuiz {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Controller controller = new Controller("Klasse.xml","Klasse.csv");
+					Controller controller = new Controller("Klasse.xml", "Klasse.csv");
 					QuizGUI frame = new QuizGUI(controller);
 					frame.setVisible(true);
 				} catch (Exception e) {
@@ -32,6 +33,7 @@ public class StartQuiz {
 	 * @param message
 	 */
 	public static void showException(Exception e, String message) {
+		System.err.println(message);
 		e.printStackTrace();
 		JOptionPane.showMessageDialog(null, message + " in " + e.getStackTrace()[0], e.getClass().getCanonicalName(),
 				JOptionPane.ERROR_MESSAGE);

@@ -9,14 +9,13 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import de.oszimt.ls.quiz.StartQuiz;
 import de.oszimt.ls.quiz.model.Model;
 import de.oszimt.ls.quiz.model.Schueler;
 import de.oszimt.ls.quiz.model.Spielstand;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import de.oszimt.ls.quiz.view.StartQuiz;
 
 public class XMLParser {
 
