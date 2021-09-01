@@ -7,5 +7,4 @@ package de.oszimt.ls.quiz.resources;
  *
  */
 public class Res {
-
 }

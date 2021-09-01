@@ -1,12 +1,17 @@
 package de.oszimt.ls.quiz.model;
-import java.util.List;
+
 import java.util.LinkedList;
+import java.util.List;
 
 public class Model {
 
-	private List<Schueler> schuelerlein = new LinkedList<Schueler>();
+	private List<Schueler> alleSchueler;
 	private Spielstand spielstand;
 	private Schueler gewaehlterSchueler;
+
+	public Model() {
+		alleSchueler = new LinkedList<Schueler>();
+	}
 
 	public Schueler getGewaehlterSchueler() {
 		return gewaehlterSchueler;
@@ -16,8 +21,8 @@ public class Model {
 		this.gewaehlterSchueler = gewaehlterSchueler;
 	}
 
-	public List<Schueler> getSchuelerlein() {
-		return schuelerlein;
+	public List<Schueler> getAlleSchueler() {
+		return alleSchueler;
 	}
 
 	public Spielstand getSpielstand() {
@@ -37,30 +42,18 @@ public class Model {
 	}
 
 	public void jokerBenutzt() {
-		for (Schueler s : getSchuelerlein()) {
-			if (s.equals(gewaehlterSchueler))
-				s.jokerEingesetzt();
-		}
+		gewaehlterSchueler.jokerEingesetzt();
 	}
 
 	public void frageBeantwortet() {
-		for (Schueler s : getSchuelerlein()) {
-			if (s.equals(gewaehlterSchueler))
-				s.gefragt();
-		}
+		gewaehlterSchueler.gefragt();
 	}
 
 	public void blamiert() {
-		for (Schueler s : getSchuelerlein()) {
-			if (s.equals(gewaehlterSchueler))
-				s.blamiert();
-		}
+		gewaehlterSchueler.blamiert();
 	}
 
 	public void nichtDa() {
-		for (Schueler s : getSchuelerlein()) {
-			if (s.equals(gewaehlterSchueler))
-				s.nichtDa();
-		}
+		gewaehlterSchueler.nichtDa();
 	}
 }

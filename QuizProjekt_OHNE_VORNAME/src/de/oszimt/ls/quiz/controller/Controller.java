@@ -1,31 +1,33 @@
 package de.oszimt.ls.quiz.controller;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
 import de.oszimt.ls.quiz.model.Model;
 import de.oszimt.ls.quiz.model.Schueler;
-import de.oszimt.ls.quiz.model.XMLParser;
+import de.oszimt.ls.quiz.model.file.FileParser;
+import de.oszimt.ls.quiz.model.file.XMLParser;
 
 public class Controller {
 
 	private Model model;
-	private XMLParser xmlParser;
+	private FileParser fileParser;
 	private int frageZeiger;
 	public final int FRAGEANZAHL = 10;
 
-	public Controller(String xmlPfad) {
+	public Controller(String xmlPfad, String csvPfad) {
 		model = new Model();
-		xmlParser = new XMLParser(xmlPfad);
-		model = xmlParser.laden();
+		fileParser = new FileParser(xmlPfad, csvPfad);
+		model = fileParser.laden();
 	}
 
 	public int getFrageZeiger() {
 		return frageZeiger;
 	}
-	
+
 	public boolean Spielende() {
-		return frageZeiger == FRAGEANZAHL;
+		return frageZeiger >= FRAGEANZAHL;
 	}
 
 	public Schueler getGewaehlterSchueler() {
@@ -33,41 +35,41 @@ public class Controller {
 	}
 
 	public String getSpielstand() {
-		return model.getSpielstand().getSpielstand();
+		return model.getSpielstand().toString();
 	}
-	
+
 	public void getZufallsSchueler() {
-		
-			Random rand = new Random();
-			List<Schueler> schuelerlein = model.getSchuelerlein();
-			int maxFragen = 0;
 
-			for (Schueler s : schuelerlein){
-				if (s.getFragen() > maxFragen && s.getIstAnwesend()){
-					maxFragen = s.getFragen();
+		Random rand = new Random();
+		List<Schueler> alleSchueler = model.getAlleSchueler();
+		int maxFragen = 0;
+
+		for (Schueler s : alleSchueler) {
+			if (s.getFragen() > maxFragen && s.isAnwesend()) {
+				maxFragen = s.getFragen();
+			}
+		}
+
+		List<Schueler> glueckslos = new LinkedList<Schueler>();
+
+		for (Schueler s : alleSchueler) {
+			if (s.isAnwesend()) {
+				for (int i = 0; i < (maxFragen + 1) - s.getFragen(); i++) {
+					glueckslos.add(s);
 				}
 			}
+		}
 
-			List<Schueler> glueckslos = new LinkedList<Schueler>();
+		if (glueckslos.size() == 0) {
+			return;
+		}
 
-			for (Schueler s : schuelerlein){
-				if (s.getIstAnwesend()){
-					for (int i = 0; i < (maxFragen + 1) - s.getFragen(); i++){
-						glueckslos.add(s);
-					}
-				}
-			}
-
-			if (glueckslos.size() == 0){
-				return;
-			}
-
-			int klassengroesse = glueckslos.size();
-			model.setGewaehlterSchueler(glueckslos.get(rand.nextInt(klassengroesse)));
+		int klassengroesse = glueckslos.size();
+		model.setGewaehlterSchueler(glueckslos.get(rand.nextInt(klassengroesse)));
 	}
 
 	private void speichernInDateien() {
-		xmlParser.speichern(model);
+		fileParser.speichern(model);
 	}
 
 	public void heimGewonnen() {
@@ -99,6 +101,10 @@ public class Controller {
 	public void nichtDa() {
 		model.nichtDa();
 		speichernInDateien();
+	}
+
+	public FileParser getFileParser() {
+		return fileParser;
 	}
 
 }

@@ -1,5 +1,7 @@
-package de.oszimt.ls.quiz.model;
+package de.oszimt.ls.quiz.model.file;
+
 import java.io.File;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -7,39 +9,54 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import de.oszimt.ls.quiz.model.Model;
+import de.oszimt.ls.quiz.model.Schueler;
+import de.oszimt.ls.quiz.model.Spielstand;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import de.oszimt.ls.quiz.view.StartQuiz;
 
 public class XMLParser {
 
 	private File datei;
 
-	// Konstruktor
+	/**
+	 * Erstelle XML Datei
+	 * 
+	 * @param pfad
+	 */
 	public XMLParser(String pfad) {
 		this.datei = new File(pfad);
+
 		// Datei existiert noch nicht
 		if (datei.exists() && datei.length() != 0) {
 			// Dateiinhalt laden
 			laden();
-		} else { // Datei exisitert nicht
+
+		} else {
+			// Datei exisitert nicht
 			try {
 				// Anlegen der Datei
 				this.datei.createNewFile();
 			} catch (Exception e) {
-				System.out.println("Dokument konnte nicht erzeugt werden.");
+				StartQuiz.showException(e, "Dokument konnte nicht erzeugt werden.");
 			}
 		}
 	}
 
-	// Methoden
+	/**
+	 * LÃ¤dt die XML Datei
+	 * @return Model der XML-Datei
+	 */
 	public Model laden() {
 		Model model = new Model();
 		try {
 			// Auslesen vorbereiten
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			// Datei auswählen
+			// Datei auswï¿½hlen
 			Document doc = dBuilder.parse(this.datei);
 			doc.getDocumentElement().normalize();
 
@@ -51,31 +68,35 @@ public class XMLParser {
 			NodeList stand = nList.item(0).getChildNodes();
 
 			// Spielstand
-			model.setSpielstand(new Spielstand(stand.item(0).getAttributes().item(0).getNodeValue(),
-					Integer.parseInt(stand.item(0).getTextContent()),
-					stand.item(1).getAttributes().item(0).getNodeValue(),
-					Integer.parseInt(stand.item(1).getTextContent())));
+			String parteiHeim = stand.item(0).getAttributes().item(0).getNodeValue();
+			int pktHeim = Integer.parseInt(stand.item(0).getTextContent());
+			String parteiGast = stand.item(1).getAttributes().item(0).getNodeValue();
+			int pktGast = Integer.parseInt(stand.item(1).getTextContent());
+			model.setSpielstand(new Spielstand(parteiHeim, pktHeim, parteiGast, pktGast));
 
 			// Ebene Mitspieler
 			NodeList mitspieler = nList.item(1).getChildNodes();
 
-			// Schüler auslesen
+			// Schï¿½ler auslesen
 			for (int i = 0; i < mitspieler.getLength(); i++) {
-				model.getSchuelerlein()
-						.add(new Schueler(mitspieler.item(i).getAttributes().item(0).getNodeValue(),
-								Integer.parseInt(mitspieler.item(i).getChildNodes().item(0).getTextContent()),
-								Integer.parseInt(mitspieler.item(i).getChildNodes().item(1).getTextContent()),
-								Integer.parseInt(mitspieler.item(i).getChildNodes().item(2).getTextContent())));
+				String name = mitspieler.item(i).getAttributes().item(0).getNodeValue();
+				int joker = Integer.parseInt(mitspieler.item(i).getChildNodes().item(0).getTextContent());
+				int blamiert = Integer.parseInt(mitspieler.item(i).getChildNodes().item(1).getTextContent());
+				int fragen = Integer.parseInt(mitspieler.item(i).getChildNodes().item(2).getTextContent());
+
+				model.getAlleSchueler().add(new Schueler(name, joker, blamiert, fragen));
 			}
 
 		} catch (Exception e) {
-			System.out.println("Lesen der Datei fehlgeschlagen!");
-			System.out.println(e);
+			StartQuiz.showException(e, "Lesen der Datei fehlgeschlagen!");
 		}
 		return model;
 	}
 
-	// speichert alle Nutzereingaben in eine XML-Datei
+	/**
+	 * speichert alle Nutzereingaben in eine XML-Datei
+	 * @param model, Model
+	 */
 	public void speichern(Model model) {
 		try {
 			// XML-Dokument vorbereiten
@@ -83,7 +104,7 @@ public class XMLParser {
 			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 			Document doc = docBuilder.newDocument();
 
-			// XML-Dokument mit Daten füllen
+			// XML-Dokument mit Daten fï¿½llen
 			Element klasse = doc.createElement(datei.getName());
 			doc.appendChild(klasse);
 
@@ -109,8 +130,8 @@ public class XMLParser {
 			Element mitspieler = doc.createElement("Mitspieler");
 			klasse.appendChild(mitspieler);
 
-			// Schüler eintragen
-			for (Schueler s : model.getSchuelerlein()) {
+			// Schï¿½ler eintragen
+			for (Schueler s : model.getAlleSchueler()) {
 				Element e = doc.createElement("Schueler");
 				e.setAttribute("name", s.getName());
 				mitspieler.appendChild(e);
@@ -135,7 +156,7 @@ public class XMLParser {
 			transformer.transform(source, result);
 
 		} catch (Exception e) {
-			System.out.println("Datei konnte nicht gespeichert werden!");
+			StartQuiz.showException(e, "Datei konnte nicht gespeichert werden!");
 		}
 	}
 
