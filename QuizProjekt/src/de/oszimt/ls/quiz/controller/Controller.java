@@ -7,7 +7,6 @@ import java.util.Random;
 import de.oszimt.ls.quiz.model.Model;
 import de.oszimt.ls.quiz.model.Schueler;
 import de.oszimt.ls.quiz.model.file.FileParser;
-import de.oszimt.ls.quiz.model.file.XMLParser;
 
 public class Controller {
 
