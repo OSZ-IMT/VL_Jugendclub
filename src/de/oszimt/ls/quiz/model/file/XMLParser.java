@@ -9,13 +9,14 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
 import de.oszimt.ls.quiz.StartQuiz;
 import de.oszimt.ls.quiz.model.Model;
 import de.oszimt.ls.quiz.model.Schueler;
 import de.oszimt.ls.quiz.model.Spielstand;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 public class XMLParser {
 
@@ -47,6 +48,7 @@ public class XMLParser {
 
 	/**
 	 * Lädt die XML Datei
+	 * 
 	 * @return Model der XML-Datei
 	 */
 	public Model laden() {
@@ -55,7 +57,8 @@ public class XMLParser {
 			// Auslesen vorbereiten
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			// Datei ausw�hlen
+
+			// Datei auswaehlen
 			Document doc = dBuilder.parse(this.datei);
 			doc.getDocumentElement().normalize();
 
@@ -63,25 +66,20 @@ public class XMLParser {
 			// Ebene Klasse.xml
 			NodeList nList = doc.getChildNodes().item(0).getChildNodes();// Spielstand (0), Mitspieler (1)
 
-			// Ebene Spielstand
-			NodeList stand = nList.item(0).getChildNodes();
+			// Spielstand laden
+			createSpielstand(doc, model);
 
-			// Spielstand
-			String parteiHeim = stand.item(0).getAttributes().item(0).getNodeValue();
-			int pktHeim = Integer.parseInt(stand.item(0).getTextContent());
-			String parteiGast = stand.item(1).getAttributes().item(0).getNodeValue();
-			int pktGast = Integer.parseInt(stand.item(1).getTextContent());
-			model.setSpielstand(new Spielstand(parteiHeim, pktHeim, parteiGast, pktGast));
+			// Ebene Schueler / Mitspieler
+			NodeList schuelerList = doc.getElementsByTagName("Mitspieler").item(0).getChildNodes();
 
-			// Ebene Mitspieler
-			NodeList mitspieler = nList.item(1).getChildNodes();
+			// Schueler auslesen
+			for (int i = 0; i < schuelerList.getLength(); i++) {
+				Element schueler = (Element) schuelerList.item(i);
+				String name = schueler.getAttribute("name");
 
-			// Sch�ler auslesen
-			for (int i = 0; i < mitspieler.getLength(); i++) {
-				String name = mitspieler.item(i).getAttributes().item(0).getNodeValue();
-				int joker = Integer.parseInt(mitspieler.item(i).getChildNodes().item(0).getTextContent());
-				int blamiert = Integer.parseInt(mitspieler.item(i).getChildNodes().item(1).getTextContent());
-				int fragen = Integer.parseInt(mitspieler.item(i).getChildNodes().item(2).getTextContent());
+				int joker = Integer.parseInt(schueler.getElementsByTagName("Joker").item(0).getTextContent());
+				int blamiert = Integer.parseInt(schueler.getElementsByTagName("Blamiert").item(0).getTextContent());
+				int fragen = Integer.parseInt(schueler.getElementsByTagName("Fragen").item(0).getTextContent());
 
 				model.getAlleSchueler().add(new Schueler(name, joker, blamiert, fragen));
 			}
@@ -93,7 +91,32 @@ public class XMLParser {
 	}
 
 	/**
-	 * speichert alle Nutzereingaben in eine XML-Datei
+	 * Create the spielstand
+	 * 
+	 * @param model
+	 * @param doc
+	 */
+	private void createSpielstand(Document doc, Model model) {
+		// Ebene Spielstand
+		Element spielstand = (Element) doc.getElementsByTagName("Spielstand").item(0);
+
+		// Partei Lehrer einlesen
+		Element parteiLehrer = (Element) spielstand.getFirstChild();
+		String lehrerName = parteiLehrer.getAttribute("name");
+		int lehrerPkt = Integer.parseInt(parteiLehrer.getTextContent());
+
+		// Partei Schueler einlesen
+		Element parteiSchueler = (Element) parteiLehrer.getNextSibling();
+		String schuelerName = parteiSchueler.getAttribute("name");
+		int schuelerPkt = Integer.parseInt(parteiSchueler.getTextContent());
+
+		// Spielstand bauen
+		model.setSpielstand(new Spielstand(lehrerName, lehrerPkt, schuelerName, schuelerPkt));
+	}
+
+	/**
+	 * Speichert alle Nutzereingaben in die XML-Datei
+	 * 
 	 * @param model, Model
 	 */
 	public void speichern(Model model) {
@@ -103,7 +126,7 @@ public class XMLParser {
 			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 			Document doc = docBuilder.newDocument();
 
-			// XML-Dokument mit Daten f�llen
+			// XML-Dokument mit Daten fuellen
 			Element klasse = doc.createElement(datei.getName());
 			doc.appendChild(klasse);
 
@@ -111,38 +134,46 @@ public class XMLParser {
 			Element sstand = doc.createElement("Spielstand");
 			klasse.appendChild(sstand);
 
+			// Partei Lehrer speichern
 			Element partei = doc.createElement("Partei");
-
-			partei.setAttribute("name", model.getSpielstand().getParteiHeim());
+			partei.setAttribute("name", model.getSpielstand().getLehrerName());
 			sstand.appendChild(partei);
 
-			partei.appendChild(doc.createTextNode(model.getSpielstand().getPunkteHeim() + ""));
+			String pktLehrer = String.valueOf(model.getSpielstand().getPunkteSchueler());
+			partei.appendChild(doc.createTextNode(pktLehrer));
 
+			// Partei Schueler speichern
 			partei = doc.createElement("Partei");
-
-			partei.setAttribute("name", model.getSpielstand().getParteiGast());
+			partei.setAttribute("name", model.getSpielstand().getSchuelerName());
 			sstand.appendChild(partei);
 
-			partei.appendChild(doc.createTextNode(model.getSpielstand().getPunkteGast() + ""));
+			String pktSchueler = String.valueOf(model.getSpielstand().getPunkteSchueler());
+			partei.appendChild(doc.createTextNode(pktSchueler));
 
 			// Mitspieler speichern
 			Element mitspieler = doc.createElement("Mitspieler");
 			klasse.appendChild(mitspieler);
 
-			// Sch�ler eintragen
-			for (Schueler s : model.getAlleSchueler()) {
-				Element e = doc.createElement("Schueler");
-				e.setAttribute("name", s.getName());
-				mitspieler.appendChild(e);
+			// Schueler eintragen
+			for (Schueler schueler : model.getAlleSchueler()) {
+				Element schuelerXml = doc.createElement("Schueler");
+				schuelerXml.setAttribute("name", schueler.getName());
+				mitspieler.appendChild(schuelerXml);
+
 				Element joker = doc.createElement("Joker");
-				joker.appendChild(doc.createTextNode(s.getJoker() + ""));
-				e.appendChild(joker);
+				String pktJoker = String.valueOf(schueler.getFragen());
+				joker.appendChild(doc.createTextNode(pktJoker));
+				schuelerXml.appendChild(joker);
+
 				Element blamiert = doc.createElement("Blamiert");
-				blamiert.appendChild(doc.createTextNode(s.getBlamiert() + ""));
-				e.appendChild(blamiert);
+				String pktBlamiert = String.valueOf(schueler.getFragen());
+				blamiert.appendChild(doc.createTextNode(pktBlamiert));
+				schuelerXml.appendChild(blamiert);
+
 				Element fragen = doc.createElement("Fragen");
-				fragen.appendChild(doc.createTextNode(s.getFragen() + ""));
-				e.appendChild(fragen);
+				String pktFragen = String.valueOf(schueler.getFragen());
+				fragen.appendChild(doc.createTextNode(pktFragen));
+				schuelerXml.appendChild(fragen);
 			}
 
 			// XML-File schreiben vorbereiten

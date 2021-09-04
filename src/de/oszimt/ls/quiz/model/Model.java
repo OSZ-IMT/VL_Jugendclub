@@ -34,11 +34,11 @@ public class Model {
 	}
 
 	public void heimGewonnen() {
-		this.getSpielstand().heimGewinnt();
+		this.getSpielstand().lehrerGewinnt();
 	}
 
 	public void gastGewonnen() {
-		this.getSpielstand().gastGewinnt();
+		this.getSpielstand().schuelerGewinnt();
 	}
 
 	public void jokerBenutzt() {
